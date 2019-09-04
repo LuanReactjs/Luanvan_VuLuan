@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Mi Band 2</title>
+    <!-- Nhúng file Javasript tại đường dẫn src để có thể xây dựng 1 graph -->
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        h1 {
+            color: #ffffff;
+            margin: auto;
+            width: 50%;
+
+            padding: 10px;
+        }
+
+        body {
+            padding-top: 20px;
+            background-image: url("nen.jpg");
+        }
+
+
+        #ChartContainer {
+            margin: auto;
+        }
+
+        .content {
+            width: 1500px;
+            margin: auto;
+            padding-bottom: 200px;
+
+            background-color: gray;
+        }
+    </style>
+</head>
+<body >
+    <div class="content">
+        <h1> 1. Thông tin</h1><br>
+        <table align="center" border="1" style="background-color:green;">
+            <thead>
+                <tr>
+                    <td style="text-align: center;width:200px; size:20 ;font-size:200%; color: white;">Nhịp tim</td>
+                    <td style="height:50px  ">
+                        <div>
+                            <input type="text" style="text-align: center;width:200px; size:20 ;font-size:200%;"
+                                class="form-control" id="heart">
+                        </div>
+                    </td>
+
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: center;width:200px; size:20 ;font-size:200%;color: white;">bước chân</td>
+                    <td style="height:50px">
+                        <div class="input-group">
+                            <input style="text-align: center;width:200px; size:20 ;font-size:200%;" type="text"
+                                class="form-control" id="step"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;width:200px; size:20 ;font-size:200%; color: white;"> calo</td>
+                    <td style="height:50px">
+                        <div class="input-group">
+                            <input style="text-align: center;width:200px; size:20 ;font-size:200%;" type="text"
+                                class="form-control" id="calo"></div>
+                    </td>
+
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+        <h1> 2. ĐỒ THỊ</h1><br>
+
+        <div id="ChartContainer" style="height: 300px; width:80%;  " align="center"></div>
+        <script type="text/javascript">
+
+            function httpGetAsync(theUrl, callback) {
+
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.onreadystatechange = function () {
+                    if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                        callback(JSON.parse(xmlHttp.responseText));
+                }
+                xmlHttp.open("GET", theUrl, true); // true for asynchronous
+                xmlHttp.send(null);
+            }
+
+            window.onload = function () {
+                var dataheart = [];
+
+                var Chart = new CanvasJS.Chart("ChartContainer", {
+                    backgroundColor: "#262626",
+                    zoomEnabled: true, // Dùng thuộc tính có thể zoom vào graph
+                     title: {
+                        text: "NHỊP TIM" // Viết tiêu đề cho graph
+                    },
+                    toolTip: { // Hiển thị cùng lúc 2 trường giá trị nhiệt độ, độ ẩm trên graph
+                        shared: true
+                    },
+                   
+                    data: [{
+                        // Khai báo các thuộc tính của dataheart và datastep
+                        type: "line", // Chọn kiểu dữ liệu đường
+                        xValueType: "dateTime", // Cài đặt kiểu giá trị tại trục X là thuộc tính thời gian
+                        showInLegend: true, // Hiển thị "heart" ở mục chú thích (legend items)
+                        name: "nhip tim",
+                        lineColor: "#04C305",
+                        dataPoints: dataheart,// Dữ liệu hiển thị sẽ lấy từ dataheart
+                        color: "#04C305",         // optional
+                        markerSize: 0
+                    },
+
+                    ],
+                });
+               
+                var yheartVal = 0; 
+                var updateInterval = 100; // Thời gian cập nhật dữ liệu 2000ms = 2s
+                var time = new Date(); // Lấy thời gian hiện tại
+                var updateChart = function () {
+                    httpGetAsync('/get', function (data) {
+                        // Gán giá trị từ localhost:3000/get vào textbox để hiển thị
+                        document.getElementById("heart").value = data[0].heart;
+                        document.getElementById("step").value = data[0].step;
+                        document.getElementById("calo").value = data[0].calo;
+                        
+                        // Cập nhật thời gian và lấy giá trị heart step từ server
+                        time.setTime(time.getTime() + updateInterval);
+                        yheartVal = parseInt(data[0].heart);
+
+                        dataheart.push({ // cập nhât dữ liệu mới từ server
+                            x: time.getTime(),
+                            y: yheartVal
+                        });
+
+                        Chart.render(); // chuyển đổi dữ liệu của của graph thành mô hình đồ họa
+                    });
+
+                };
+
+                updateChart(); // Chạy lần đầu tiên
+                setInterval(function () { // Cập nhật lại giá trị graph sau thời gian updateInterval
+                    updateChart()
+                }, updateInterval);
+            }
+        </script>
+        <!-- thiết lập kích thước cho graph thông qua id ChartContainer đã thiết lập ở trên -->
+    </div>
+</body>
+</html>
